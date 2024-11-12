@@ -1,7 +1,7 @@
 .env
 package-lock.json
-mongo/
-postgres/
+/mongo
+/postgres
 node_modules/
 dist/
 build/
