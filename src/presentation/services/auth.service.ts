@@ -1,5 +1,5 @@
 import { bcryptAdapter, envs, JwtAdapter } from '../../config';
-import userModel from '../../data/mongo/models/user.model';
+import { UserModel } from '../../data';
 import {
   CustomError,
   LoginUserDto,
@@ -14,11 +14,11 @@ export class AuthService {
   ) {}
 
   public async registerUser(registerUserDto: RegisterUserDto) {
-    const existUser = await userModel.findOne({ email: registerUserDto.email });
+    const existUser = await UserModel.findOne({ email: registerUserDto.email });
     if (existUser) throw CustomError.badRequest('User already exist');
 
     try {
-      const user = new userModel(registerUserDto);
+      const user = new UserModel(registerUserDto);
 
       user.password = bcryptAdapter.hash(registerUserDto.password);
 
@@ -42,7 +42,7 @@ export class AuthService {
   }
 
   public async loginUser(loginUserDto: LoginUserDto) {
-    const user = await userModel.findOne({ email: loginUserDto.email });
+    const user = await UserModel.findOne({ email: loginUserDto.email });
     if (!user) throw CustomError.badRequest('Email or password not match');
 
     try {
@@ -75,7 +75,7 @@ export class AuthService {
     const {email} = payload as {email: string};
     if (!email) throw CustomError.internalServer('Email not in token');
 
-    const user = await userModel.findOne({ email });
+    const user = await UserModel.findOne({ email });
     if (!user) throw CustomError.internalServer('Email not found');
 
     user.emailValidated = true;

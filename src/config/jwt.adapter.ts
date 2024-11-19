@@ -13,12 +13,12 @@ export class JwtAdapter {
     });
   }
 
-  static validateToken(token: string) {
-    return new Promise((resolve) => {
-      jwt.verify(token, JWT_SEED, (err, decoded) => {
-        if (err) return resolve(null);
-        resolve(decoded);
-      });
-    });
+  static async validateToken<T>(token: string): Promise<T | null> {
+    try {
+      const decoded = jwt.verify(token, JWT_SEED);
+      return decoded as T;
+    } catch (err) {
+      return null;
+    }
   }
 }

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 const CategorySchema = new mongoose.Schema({
   name: {
@@ -9,6 +9,11 @@ const CategorySchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true],
+  }
 });
 
-export default mongoose.model('Category', CategorySchema);
+export const CategoryModel = mongoose.model('Category', CategorySchema);
