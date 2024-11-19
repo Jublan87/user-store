@@ -1,4 +1,4 @@
-import { bcryptAdapter, JwtAdapter } from '../../config';
+import { bcryptAdapter, envs, JwtAdapter } from '../../config';
 import userModel from '../../data/mongo/models/user.model';
 import {
   CustomError,
@@ -6,9 +6,12 @@ import {
   RegisterUserDto,
   UserEntity,
 } from '../../domain';
+import { EmailService } from './email.service';
 
 export class AuthService {
-  constructor() {}
+  constructor(
+    private readonly emailService: EmailService,
+  ) {}
 
   public async registerUser(registerUserDto: RegisterUserDto) {
     const existUser = await userModel.findOne({ email: registerUserDto.email });
@@ -21,7 +24,7 @@ export class AuthService {
 
       await user.save();
 
-      // Email de confirmacion
+      await this.sendEmailValidationLink(user.email); 
 
       const { password, ...userEntity } = UserEntity.fromObject(user);
       
@@ -65,9 +68,47 @@ export class AuthService {
     }
   }
 
-  private async generateToken(payload: any) {
-    const token = await JwtAdapter.generateToken({ payload: payload });
+  public validateEmail = async (token: string) => {
+    const payload = await JwtAdapter.validateToken(token);
+    if (!payload) throw CustomError.unauthorized('Invalid token');
+
+    const {email} = payload as {email: string};
+    if (!email) throw CustomError.internalServer('Email not in token');
+
+    const user = await userModel.findOne({ email });
+    if (!user) throw CustomError.internalServer('Email not found');
+
+    user.emailValidated = true;
+    await user.save();
+
+    return true;
+  }
+
+  private readonly generateToken = async (payload: any) => {
+    const token = await JwtAdapter.generateToken({ ...payload });
     if (!token) throw CustomError.internalServer('Token not generated');
     return token;
+  }
+
+  private readonly sendEmailValidationLink = async (email: string) => {
+    const token = await this.generateToken({ email });
+    const link = `${envs.WEBSERVICE_URL}/auth/validate-email/${token}`;
+    const emailContent = `
+      <h1>Validate your email</h1>
+      <p>Click the link below to validate your email</p>
+      <a href="${link}">Validate email here</a>
+    `;
+
+    const options = {
+      to: email,
+      subject: 'Validate your email',
+      htmlBody: emailContent,
+    }
+
+    const isSet = await this.emailService.sendEmail(options);
+
+    if (!isSet) throw CustomError.internalServer('Email not send');
+
+    return isSet;
   }
 }
