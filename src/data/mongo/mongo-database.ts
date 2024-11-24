@@ -16,4 +16,14 @@ export class MongoDatabase {
       throw error;
     }
   }
+
+  static async disconnect() {
+    try {
+      await mongoose.disconnect();
+      return true;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  } 
 }

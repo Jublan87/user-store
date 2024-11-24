@@ -15,7 +15,7 @@ export class UserEntity {
     const { id, _id, name, email, emailValidated, password, role, img } =
       object;
 
-    if (!id && !_id) {
+    if (!id || !_id) {
       throw CustomError.badRequest('Missing Id');
     }
 
@@ -40,7 +40,7 @@ export class UserEntity {
     }
 
     return new UserEntity(
-      _id || id,
+      id || _id,
       name,
       email,
       emailValidated,
